@@ -15,35 +15,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  // Check for temp login credentials
+  // When redirected with temp credentials, pre-fill form (no auto-submit)
   useEffect(() => {
-    const autoLogin = async () => {
-      // Check for temp credentials
-      const tempEmail = localStorage.getItem('temp_login_email');
-      const tempPassword = localStorage.getItem('temp_login_password');
-      
-      if (tempEmail && tempPassword) {
-        console.log('Found test credentials, auto-filling form:', tempEmail);
-        setFormData({ email: tempEmail, password: tempPassword });
-        
-        try {
-          // Submit form automatically
-          console.log('Auto-submitting login with test credentials');
-          const user = await login(tempEmail, tempPassword);
-          console.log('Auto-login successful', user);
-          
-          // Clear credentials after successful login
-          localStorage.removeItem('temp_login_email');
-          localStorage.removeItem('temp_login_password');
-        } catch (err) {
-          console.error('Auto-login failed:', err);
-          setError('Auto-login failed. Please try manually.');
-        }
-      }
-    };
-    
-    autoLogin();
-  }, [login]);
+    const tempEmail = localStorage.getItem('temp_login_email');
+    const tempPassword = localStorage.getItem('temp_login_password');
+    if (tempEmail && tempPassword) {
+      setFormData({ email: tempEmail, password: tempPassword });
+      localStorage.removeItem('temp_login_email');
+      localStorage.removeItem('temp_login_password');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,10 +39,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
       console.log('Attempting login with:', formData.email);
       const user = await login(formData.email, formData.password);
       console.log('Login successful', user);
-      
-      // Clear temporary credentials after successful login
-      localStorage.removeItem('temp_login_email');
-      localStorage.removeItem('temp_login_password');
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -75,7 +52,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
     }));
   };
 
-  // Demo credentials (Only show Main Admin and Student on the main login page)
+  // Demo credentials (Only Main Admin and Student on main login page)
   const demoCredentials = [
     { role: 'Main Admin', email: 'admin@safenest.com', password: 'password123' },
     { role: 'Student', email: 'student@safenest.com', password: 'password123' },
@@ -83,6 +60,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
 
   const fillDemo = (email: string, password: string) => {
     setFormData({ email, password });
+    setError('');
+    console.log('Filled demo credentials for:', email);
   };
 
   return (

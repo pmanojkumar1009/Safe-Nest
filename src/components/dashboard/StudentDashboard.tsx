@@ -211,7 +211,7 @@ const StudentDashboard: React.FC = () => {
               {/* Header */}
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  Welcome back, {user?.name}! 👋
+                  Welcome back, {user?.name}! 
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
                   Track your complaints and submit new ones easily

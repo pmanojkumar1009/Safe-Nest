@@ -25,11 +25,11 @@ const connectWithRetry = async () => {
       socketTimeoutMS: 45000, // Increase socket timeout
     });
     
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
     // Initialize default users after successful connection
-    initializeDefaultUsers().catch(err => console.error('❌ Error initializing default users:', err));
+    initializeDefaultUsers().catch(err => console.error(' Error initializing default users:', err));
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err);
+    console.error(' MongoDB connection error:', err);
     console.log('Retrying connection in 5 seconds...');
     setTimeout(connectWithRetry, 5000);
   }
@@ -122,7 +122,7 @@ const initializeDefaultUsers = async () => {
         role: 'mainadmin',
         isActive: true
       });
-      console.log('✅ Default main admin created');
+      console.log(' Default main admin created');
     }
 
     // Create default sub-admins for all departments
@@ -160,7 +160,7 @@ const initializeDefaultUsers = async () => {
         });
       }
     }
-    console.log('✅ Default sub-admins initialized');
+    console.log(' Default sub-admins initialized');
 
     // Create sample students
     const sampleStudents = [
@@ -182,10 +182,10 @@ const initializeDefaultUsers = async () => {
         });
       }
     }
-    console.log('✅ Sample students created');
+    console.log(' Sample students created');
 
   } catch (error) {
-    console.error('❌ Error initializing default users:', error);
+    console.error(' Error initializing default users:', error);
   }
 };
 
@@ -585,6 +585,47 @@ app.put('/api/complaints/:id/assign', authenticateToken, async (req, res) => {
   }
 });
 
+// Notifications Routes
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+  try {
+    const onlyUnread = (req.query.onlyUnread ?? 'true') === 'true';
+    const filter = { userId: req.user.userId };
+    if (onlyUnread) filter.read = false;
+
+    const notifications = await Notification.find(filter).sort({ createdAt: -1 });
+    res.json(notifications);
+  } catch (error) {
+    console.error('Get notifications error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.put('/api/notifications/:id/read', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const notif = await Notification.findOne({ _id: id, userId: req.user.userId });
+    if (!notif) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    notif.read = true;
+    await notif.save();
+    res.json({ message: 'Notification marked as read', notification: notif });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.put('/api/notifications/read-all', authenticateToken, async (req, res) => {
+  try {
+    await Notification.updateMany({ userId: req.user.userId, read: false }, { $set: { read: true } });
+    res.json({ message: 'All notifications marked as read' });
+  } catch (error) {
+    console.error('Mark all notifications read error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Get Dashboard Stats Route
 app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
   try {
@@ -655,8 +696,8 @@ app.use('*', (req, res) => {
 
 // Start server
 app.listen(PORT, async () => {
-  console.log(`🚀 SafeNest API Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(` SafeNest API Server running on port ${PORT}`);
+  console.log(` Health check: http://localhost:${PORT}/api/health`);
 });
 
 export { app };
